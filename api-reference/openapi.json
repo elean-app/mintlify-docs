@@ -1,0 +1,796 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Elean Public API",
+    "description": "The Elean Public API allows external clients — scripts, AI agents, and integrations — to read and write tasks programmatically.\n\n> **Early Access:** This API is currently in beta. Endpoints, request/response shapes, and scopes may change before the stable release. We will communicate breaking changes in advance.",
+    "version": "0.0.1",
+    "contact": {
+      "name": "Elean Support",
+      "url": "https://elean.app"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.elean.app/v1/public",
+      "description": "Production"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Statuses",
+      "description": "List the custom task statuses configured for a project."
+    },
+    {
+      "name": "Tasks",
+      "description": "Read and write tasks within a project."
+    }
+  ],
+  "paths": {
+    "/{projectSlug}/statuses": {
+      "get": {
+        "operationId": "listStatuses",
+        "summary": "List statuses",
+        "description": "Returns all custom task statuses for the project, ordered by their display order.\n\nUse the returned `id` values as `statusId` when creating or filtering tasks.\n\nRequires the `task:read` scope.",
+        "tags": ["Statuses"],
+        "parameters": [
+          {
+            "name": "projectSlug",
+            "in": "path",
+            "required": true,
+            "description": "The slug of the project.",
+            "schema": {
+              "type": "string",
+              "example": "my-project"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of custom statuses.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/TaskStatus" }
+                },
+                "example": [
+                  {
+                    "id": "018e1b2c-aaaa-0000-0000-000000000001",
+                    "name": "Backlog",
+                    "color": "#6b7280",
+                    "category": "todo",
+                    "order": 1
+                  },
+                  {
+                    "id": "018e1b2c-aaaa-0000-0000-000000000002",
+                    "name": "In Review",
+                    "color": "#f59e0b",
+                    "category": "in_progress",
+                    "order": 2
+                  },
+                  {
+                    "id": "018e1b2c-aaaa-0000-0000-000000000003",
+                    "name": "Done",
+                    "color": "#22c55e",
+                    "category": "done",
+                    "order": 3
+                  }
+                ]
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/{projectSlug}/tasks": {
+      "get": {
+        "operationId": "listTasks",
+        "summary": "List tasks",
+        "description": "Returns a paginated list of top-level tasks for the given project. Subtasks are excluded.\n\nYou can filter by a specific custom status using `statusId` (preferred), or by status category using `status`.\n\nRequires the `task:read` scope.",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "name": "projectSlug",
+            "in": "path",
+            "required": true,
+            "description": "The slug of the project (visible in the project URL).",
+            "schema": {
+              "type": "string",
+              "example": "my-project"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number (1-based).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Number of tasks per page. Maximum is 100.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "statusId",
+            "in": "query",
+            "required": false,
+            "description": "Filter by a specific custom status UUID. Takes precedence over `status` if both are provided. Use `GET /{projectSlug}/statuses` to retrieve available status IDs.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "018e1b2c-aaaa-0000-0000-000000000002"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Filter by status category. Ignored when `statusId` is provided.",
+            "schema": {
+              "type": "string",
+              "enum": ["todo", "in_progress", "done"]
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "description": "Filter by task priority.",
+            "schema": {
+              "type": "string",
+              "enum": ["none", "low", "medium", "high", "urgent"]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "description": "Full-text search in task title or external ID (e.g. `PROJ-42`).",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A paginated list of tasks.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedTasks"
+                },
+                "example": {
+                  "tasks": [
+                    {
+                      "id": "018e1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c",
+                      "externalId": "PROJ-1",
+                      "title": "Fix login bug",
+                      "description": "Users cannot log in with SSO on Safari.",
+                      "status": "in_progress",
+                      "customStatus": {
+                        "id": "018e1b2c-aaaa-0000-0000-000000000002",
+                        "name": "In Review",
+                        "color": "#f59e0b",
+                        "category": "in_progress"
+                      },
+                      "priority": "high",
+                      "dueDate": "2026-03-15T00:00:00.000Z",
+                      "assignees": [
+                        {
+                          "id": "018e1b2c-0000-0000-0000-000000000099",
+                          "name": "Jane Smith"
+                        }
+                      ],
+                      "attachments": [],
+                      "createdAt": "2026-03-01T12:00:00.000Z",
+                      "updatedAt": "2026-03-02T09:30:00.000Z"
+                    }
+                  ],
+                  "meta": {
+                    "total": 1,
+                    "page": 1,
+                    "limit": 20,
+                    "totalPages": 1,
+                    "hasMore": false
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      },
+      "post": {
+        "operationId": "createTask",
+        "summary": "Create task",
+        "description": "Creates a new task in the specified project.\n\nIf `statusId` is omitted, the task is placed in the first status of the `todo` category. Use `GET /{projectSlug}/statuses` to retrieve available status IDs.\n\nRequires the `task:create` scope.",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "name": "projectSlug",
+            "in": "path",
+            "required": true,
+            "description": "The slug of the project to create the task in.",
+            "schema": {
+              "type": "string",
+              "example": "my-project"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskBody"
+              },
+              "example": {
+                "title": "Fix login bug",
+                "description": "Users cannot log in with SSO on Safari.",
+                "priority": "high",
+                "dueDate": "2026-03-15T00:00:00.000Z",
+                "statusId": "018e1b2c-aaaa-0000-0000-000000000002"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Task created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/{projectSlug}/tasks/{taskId}": {
+      "get": {
+        "operationId": "getTask",
+        "summary": "Get task",
+        "description": "Returns a single task by its UUID or external ID (e.g. `PROJ-42`). The task must belong to the workspace associated with the API key.\n\nRequires the `task:read` scope.",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "name": "projectSlug",
+            "in": "path",
+            "required": true,
+            "description": "The slug of the project.",
+            "schema": {
+              "type": "string",
+              "example": "my-project"
+            }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the task, or its external ID (e.g. `PROJ-42`).",
+            "schema": {
+              "type": "string",
+              "example": "018e1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Task"
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/{projectSlug}/tasks/{taskId}/attachments/{attachmentId}": {
+      "get": {
+        "operationId": "getAttachment",
+        "summary": "Get attachment",
+        "description": "Returns a single attachment by its UUID. The attachment must belong to the specified task.\n\nRequires the `task:read` scope.",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "name": "projectSlug",
+            "in": "path",
+            "required": true,
+            "description": "The slug of the project.",
+            "schema": { "type": "string", "example": "my-project" }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the task, or its external ID (e.g. `PROJ-42`).",
+            "schema": {
+              "type": "string",
+              "example": "018e1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c"
+            }
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the attachment.",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "018e1b2c-aaaa-bbbb-cccc-000000000001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment found.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AttachmentSummary" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    },
+    "/{projectSlug}/tasks/{taskId}/attachments": {
+      "post": {
+        "operationId": "uploadAttachment",
+        "summary": "Upload attachment",
+        "description": "Uploads a file and attaches it to the specified task.\n\nRequires the `task:create` scope.",
+        "tags": ["Tasks"],
+        "parameters": [
+          {
+            "name": "projectSlug",
+            "in": "path",
+            "required": true,
+            "description": "The slug of the project.",
+            "schema": { "type": "string", "example": "my-project" }
+          },
+          {
+            "name": "taskId",
+            "in": "path",
+            "required": true,
+            "description": "UUID of the task, or its external ID (e.g. `PROJ-42`).",
+            "schema": {
+              "type": "string",
+              "example": "018e1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The file to upload. Maximum size is 10 MB."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Attachment uploaded successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AttachmentSummary" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/TooManyRequests" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TaskStatus": {
+        "type": "object",
+        "description": "A custom task status defined for a project.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the status. Use this as `statusId` when creating or filtering tasks.",
+            "example": "018e1b2c-aaaa-0000-0000-000000000002"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the status.",
+            "example": "In Review"
+          },
+          "color": {
+            "type": ["string", "null"],
+            "description": "Hex color code for the status, or `null` if not set.",
+            "example": "#f59e0b"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["todo", "in_progress", "done"],
+            "description": "Semantic category of the status. Used for broad filtering via the `status` query parameter.",
+            "example": "in_progress"
+          },
+          "order": {
+            "type": "integer",
+            "description": "Display order within the project.",
+            "example": 2
+          }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "description": "A task object returned by the API.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the task.",
+            "example": "018e1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c"
+          },
+          "externalId": {
+            "type": "string",
+            "description": "Human-readable task identifier, unique within the project (e.g. `PROJ-42`).",
+            "example": "PROJ-42"
+          },
+          "title": {
+            "type": "string",
+            "description": "Task title.",
+            "example": "Fix login bug"
+          },
+          "description": {
+            "type": ["string", "null"],
+            "description": "Task description as plain text. Newlines are preserved.",
+            "example": "Users cannot log in with SSO on Safari."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["todo", "in_progress", "done"],
+            "description": "Status category of the task. For the specific named status, see `customStatus`.",
+            "example": "in_progress"
+          },
+          "customStatus": {
+            "oneOf": [
+              { "$ref": "#/components/schemas/TaskStatusInline" },
+              { "type": "null" }
+            ],
+            "description": "The specific custom status assigned to this task, or `null` if none is set."
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["none", "low", "medium", "high", "urgent"],
+            "description": "Priority level of the task.",
+            "example": "high"
+          },
+          "dueDate": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "Due date in ISO 8601 format, or `null` if not set.",
+            "example": "2026-03-15T00:00:00.000Z"
+          },
+          "assignees": {
+            "type": "array",
+            "description": "List of users assigned to the task.",
+            "items": {
+              "$ref": "#/components/schemas/AssigneeSummary"
+            }
+          },
+          "attachments": {
+            "type": "array",
+            "description": "Files attached to this task. Each entry contains only the attachment ID and filename. Use `GET /{projectSlug}/tasks/{taskId}/attachments/{attachmentId}` to retrieve the full attachment details including the download URL.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Unique identifier of the attachment.",
+                  "example": "018e1b2c-aaaa-bbbb-cccc-000000000001"
+                },
+                "filename": {
+                  "type": "string",
+                  "description": "Original filename of the uploaded file.",
+                  "example": "screenshot.png"
+                }
+              }
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of when the task was created.",
+            "example": "2026-03-01T12:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the last update.",
+            "example": "2026-03-02T09:30:00.000Z"
+          }
+        }
+      },
+      "TaskStatusInline": {
+        "type": "object",
+        "description": "A compact representation of a custom status embedded in a task.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "018e1b2c-aaaa-0000-0000-000000000002"
+          },
+          "name": {
+            "type": "string",
+            "example": "In Review"
+          },
+          "color": {
+            "type": ["string", "null"],
+            "example": "#f59e0b"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["todo", "in_progress", "done"],
+            "example": "in_progress"
+          }
+        }
+      },
+      "AttachmentSummary": {
+        "type": "object",
+        "description": "A file attached to a task.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the attachment.",
+            "example": "018e1b2c-aaaa-bbbb-cccc-000000000001"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Original filename of the uploaded file.",
+            "example": "screenshot.png"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Public URL to download the attachment.",
+            "example": "https://cdn.elean.app/attachments/018e1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c/screenshot.png"
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME type of the file.",
+            "example": "image/png"
+          },
+          "size": {
+            "type": "integer",
+            "description": "File size in bytes.",
+            "example": 204800
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of when the attachment was uploaded.",
+            "example": "2026-03-01T12:00:00.000Z"
+          }
+        }
+      },
+      "AssigneeSummary": {
+        "type": "object",
+        "description": "A minimal representation of a user assigned to a task.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier of the user.",
+            "example": "018e1b2c-0000-0000-0000-000000000099"
+          },
+          "name": {
+            "type": ["string", "null"],
+            "description": "Display name of the user.",
+            "example": "Jane Smith"
+          }
+        }
+      },
+      "PaginatedTasks": {
+        "type": "object",
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Task" }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "description": "Total number of matching tasks.",
+                "example": 42
+              },
+              "page": {
+                "type": "integer",
+                "description": "Current page number.",
+                "example": 1
+              },
+              "limit": {
+                "type": "integer",
+                "description": "Number of tasks per page.",
+                "example": 20
+              },
+              "totalPages": {
+                "type": "integer",
+                "description": "Total number of pages.",
+                "example": 3
+              },
+              "hasMore": {
+                "type": "boolean",
+                "description": "Whether there are more pages after the current one.",
+                "example": true
+              }
+            }
+          }
+        }
+      },
+      "CreateTaskBody": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500,
+            "description": "Task title.",
+            "example": "Fix login bug"
+          },
+          "description": {
+            "type": "string",
+            "description": "Task description as plain text. Newlines are supported.",
+            "example": "Users cannot log in with SSO on Safari.\n\nReproducible on Safari 17+."
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["none", "low", "medium", "high", "urgent"],
+            "description": "Task priority. Defaults to `none` if omitted.",
+            "example": "high"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Due date in ISO 8601 format.",
+            "example": "2026-03-15T00:00:00.000Z"
+          },
+          "statusId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of the custom status to assign. If omitted, the task is placed in the first status of the `todo` category. Use `GET /{projectSlug}/statuses` to retrieve available IDs.",
+            "example": "018e1b2c-aaaa-0000-0000-000000000002"
+          }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "integer",
+            "example": 401
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid API key"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "The request body is missing required fields or contains invalid values.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": {
+              "statusCode": 400,
+              "message": "title must be longer than or equal to 1 characters"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "The API key is missing, invalid, or expired.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "statusCode": 401, "message": "Invalid API key" }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "The API key does not have the required scope, or the project is outside the key's allowed scope.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": {
+              "statusCode": 403,
+              "message": "Missing required scope: task:create"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The project or task was not found within the key's workspace.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "statusCode": 404, "message": "Task not found" }
+          }
+        }
+      },
+      "TooManyRequests": {
+        "description": "The rate limit for this API key has been exceeded. Retry after the indicated delay.",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ApiError" },
+            "example": { "statusCode": 429, "message": "Too many requests" }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "el_<token>",
+        "description": "API key created in **Workspace Settings → API Keys**. Pass it in the `Authorization` header as a Bearer token, or in the `X-API-Key` header.\n\nFormat: `el_` followed by 40 hex characters."
+      }
+    }
+  }
+}

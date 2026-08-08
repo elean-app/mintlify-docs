@@ -1,0 +1,93 @@
+---
+title: "Installation"
+sidebarTitle: "Installation"
+description: "Connect Claude Code, Claude Desktop, Cursor, Windsurf, or VS Code to elean."
+icon: "download"
+---
+
+The server speaks Streamable HTTP at a single endpoint:
+
+```text
+https://mcp.elean.app/mcp
+```
+
+Every client below discovers OAuth automatically (RFC 8414) and registers itself on first connect (RFC 7591) — no `client_id` or API key to copy anywhere. The first tool call opens your browser at `elean.app/mcp-connect`, where you approve the connection and pick which workspace the agent gets access to. A token is scoped to a single workspace — connect again to grant access to another one.
+
+## Popular clients
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http elean https://mcp.elean.app/mcp
+    ```
+
+    The OAuth flow runs automatically on the first tool call.
+  </Tab>
+  <Tab title="Claude Desktop">
+    1. Go to **Settings → Connectors → Add custom connector**.
+    2. Name it (e.g. "elean") and paste the URL above.
+    3. Click **Add**, then complete the OAuth flow in the browser tab that opens.
+
+    Claude connects to your MCP server from Anthropic's cloud infrastructure rather than your device, so the server must be reachable over the public internet — `mcp.elean.app` already is.
+  </Tab>
+  <Tab title="Cursor">
+    Add to `~/.cursor/mcp.json` (or `.cursor/mcp.json` in a project):
+
+    ```json ~/.cursor/mcp.json
+    {
+      "mcpServers": {
+        "elean": {
+          "url": "https://mcp.elean.app/mcp"
+        }
+      }
+    }
+    ```
+
+    Cursor prompts you to complete the OAuth flow the first time it connects.
+  </Tab>
+  <Tab title="Windsurf">
+    Add to `~/.codeium/windsurf/mcp_config.json`:
+
+    ```json mcp_config.json
+    {
+      "mcpServers": {
+        "elean": {
+          "serverUrl": "https://mcp.elean.app/mcp"
+        }
+      }
+    }
+    ```
+
+    Note the field is `serverUrl`, not `url` — Windsurf's config differs from Cursor's here.
+  </Tab>
+  <Tab title="VS Code">
+    Add to `.vscode/mcp.json` in your workspace (or your user profile for a global server):
+
+    ```json .vscode/mcp.json
+    {
+      "servers": {
+        "elean": {
+          "type": "http",
+          "url": "https://mcp.elean.app/mcp"
+        }
+      }
+    }
+    ```
+
+    VS Code uses `servers` as the root key (not `mcpServers`) and requires an explicit `"type": "http"`. MCP tools are only available in Copilot's Agent mode.
+  </Tab>
+</Tabs>
+
+Any other client that supports OAuth discovery and Dynamic Client Registration should work the same way — point it at the URL above and approve the consent screen when prompted.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title='"Incompatible auth server" during connection'>
+    Your client doesn't support Dynamic Client Registration. Use a client that implements RFC 7591, or reach out for a manually registered `client_id`.
+  </Accordion>
+
+  <Accordion title="403 responses from tool calls">
+    Check that **AI agent connections** is still enabled in Workspace Settings → Security — disabling it revokes tokens immediately.
+  </Accordion>
+</AccordionGroup>

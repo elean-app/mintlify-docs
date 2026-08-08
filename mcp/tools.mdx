@@ -1,0 +1,31 @@
+---
+title: "Tools"
+sidebarTitle: "Tools"
+description: "Full reference of MCP tools exposed by the elean server."
+icon: "wrench"
+---
+
+| Tool | Description |
+| --- | --- |
+| `list_projects` | List all projects in your workspace |
+| `get_project` | Get details of a specific project |
+| `list_tasks` | List tasks in a project — paginated (6 per page by default, up to 50), with `search` (matches title, description, and the human-readable ID like `EL-90`), `statusIds`/`assigneeIds` filters, and `sortBy`/`sortOrder` |
+| `get_task` | Get details of a specific task by its internal ID |
+| `get_task_by_external_id` | Get a task by its human-readable ID (e.g. `EL-90`), without needing the internal task ID or paging through `list_tasks` |
+| `create_task` | Create a task (title, description, assignees, status, priority, labels, due date, cycle). Pass `parentTaskId` to create it directly as a subtask |
+| `update_task` | Update an existing task. Pass `parentTaskId` to nest it under another task, or `null` to detach it from its current parent |
+| `list_subtasks` | List the subtasks of a given task |
+| `list_comments` | List comments on a task |
+| `add_comment` | Add a comment to a task |
+| `list_members` | List all members of the workspace |
+| `list_statuses` | List a project's task statuses — each project has its own set, statuses aren't shared workspace-wide |
+| `list_labels` | List labels available for a project (workspace-wide labels plus labels scoped to that project) |
+
+## Notes
+
+- Task descriptions and comments are plain text — elean converts them to its internal rich text format automatically.
+- `create_task` and `update_task` accept up to 5 assignee IDs. On `update_task`, `assigneeIds` and `labelIds` **replace** the existing list rather than merging into it.
+- `priority` is one of `low`, `medium`, `high`, or `urgent` — custom priorities aren't exposed over MCP.
+- `statusId` and `labelIds` take IDs, not names — use `list_statuses` and `list_labels` to look them up for a project first.
+- `list_tasks` is paginated; prefer `get_task_by_external_id` or `list_tasks` with `search` over paging through everything when you already know which task you're after.
+- Subtasks only support one level of nesting — the task you nest under (`parentTaskId`) can't itself already be a subtask.

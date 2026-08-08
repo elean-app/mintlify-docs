@@ -1,0 +1,57 @@
+---
+title: "Discord"
+sidebarTitle: "Discord"
+description: "Send task events to a Discord channel as rich embeds."
+icon: "discord"
+---
+
+elean can post task events straight into a Discord channel as rich embeds — new tasks, assignments, status and priority changes, and comments.
+
+## Setup
+
+<Steps>
+  <Step title="Open Integrations">
+    Go to **Workspace Settings → Integrations** and find the **Discord** card.
+  </Step>
+  <Step title="Connect a channel">
+    Click **Connect**. You'll be redirected to Discord to authorize elean and pick the server and channel that should receive updates.
+  </Step>
+  <Step title="Choose events">
+    Back in elean, select which events should be sent to that channel (see below). You can change this at any time.
+  </Step>
+</Steps>
+
+elean never sees your Discord credentials — the connection uses Discord's OAuth `webhook.incoming` scope, which only grants permission to post messages to the single channel you picked.
+
+## Supported events
+
+| Event | Description |
+| --- | --- |
+| `task.created` | A new task is created |
+| `task.updated` | A task's fields are edited |
+| `task.assigned` | A task is assigned to someone |
+| `task.status_changed` | A task moves to a different status |
+| `task.priority_changed` | A task's priority changes |
+| `task.comment` | A new comment is posted on a task |
+| `task.deleted` | A task is deleted |
+
+Each event is posted as an embed with a link back to the task in elean.
+
+## Limits
+
+The number of Discord channel connections per workspace depends on your plan:
+
+| Plan | Discord connections |
+| --- | --- |
+| Stream | 5 |
+| River | 15 |
+| Yasien | 30 |
+| Alpheus | Unlimited |
+
+<Note>
+  These limits apply per workspace, not per channel — you can point multiple connections at different channels within your plan's limit.
+</Note>
+
+## Disconnecting
+
+Remove a connection from **Workspace Settings → Integrations → Discord → Disconnect**. This deletes the stored webhook — no further events will be sent, and you can reconnect at any time.

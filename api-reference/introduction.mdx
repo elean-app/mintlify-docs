@@ -1,0 +1,361 @@
+---
+title: 'Public API'
+description: 'Integrate Elean into your tools, scripts, and AI agents using the Public API.'
+---
+
+> **Early Access — Beta**
+> The Elean Public API is currently in beta. Endpoint paths, request/response shapes, and scopes may change before the stable `1.0` release. We will always communicate breaking changes before they go live.
+
+## Overview
+
+The Elean Public API lets external clients — automation scripts, AI agents, CLI tools, and third-party integrations — read and write tasks without going through the browser UI. Authentication is handled via **API keys** tied to a specific workspace.
+
+## Base URL
+
+```
+https://api.elean.app/v1/public
+```
+
+All endpoints are relative to this base URL.
+
+## Authentication
+
+Every request must include a valid API key.
+
+**Authorization header (recommended):**
+```
+Authorization: Bearer el_<your_key>
+```
+
+API keys are created in **Workspace Settings → API Keys**. Each key carries:
+
+- **Scopes** — which operations it may perform (`task:read`, `task:create`, `task:update`)
+- **Project scope** — access to all projects in the workspace, or restricted to a specific project
+- **Expiry** — an optional date after which the key stops working
+
+> API keys are displayed **once** at creation time. Copy and store yours securely — it cannot be retrieved again.
+
+## Rate Limits
+
+Rate limits are enforced per API key at **60 requests per minute**. Exceeding the limit returns `429 Too Many Requests`. Per-plan limits will be introduced in a future release.
+
+## Scopes
+
+| Scope | Grants access to |
+|---|---|
+| `task:read` | List tasks, get a task, list comments |
+| `task:create` | Create tasks, upload attachments |
+| `task:update` | Update tasks, delete tasks, add comments |
+
+## Endpoints
+
+### List statuses
+
+`GET /{projectSlug}/statuses`
+
+Returns all custom task statuses for the project. Use the returned `id` values as `statusId` when creating or filtering tasks. Requires `task:read`.
+
+**Example request**
+
+```bash
+curl https://api.elean.app/v1/public/my-project/statuses \
+  -H "Authorization: Bearer el_a3f9c2e1b8d47f6a9c0e2b5d8f1a4c7e9b2d5f8a1"
+```
+
+---
+
+### List labels
+
+`GET /{projectSlug}/labels`
+
+Returns all labels available in the project — workspace-wide labels and project-scoped labels. Use the returned `id` values as entries in `labelIds` when creating or updating tasks. Requires `task:read`.
+
+**Example request**
+
+```bash
+curl https://api.elean.app/v1/public/my-project/labels \
+  -H "Authorization: Bearer el_a3f9c2e1b8d47f6a9c0e2b5d8f1a4c7e9b2d5f8a1"
+```
+
+---
+
+### List members
+
+`GET /{projectSlug}/members`
+
+Returns all members of the project. Use the returned `id` values as entries in `assigneeIds` when creating or updating tasks. Requires `task:read`.
+
+**Example request**
+
+```bash
+curl https://api.elean.app/v1/public/my-project/members \
+  -H "Authorization: Bearer el_a3f9c2e1b8d47f6a9c0e2b5d8f1a4c7e9b2d5f8a1"
+```
+
+---
+
+### List tasks
+
+`GET /{projectSlug}/tasks`
+
+Returns a paginated list of top-level tasks in the given project. Subtasks are excluded. Requires `task:read`.
+
+**Query parameters**
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `page` | integer | `1` | Page number (1-based) |
+| `limit` | integer | `20` | Results per page, max `100` |
+| `statusId` | UUID | — | Filter by specific custom status ID (takes precedence over `status`) |
+| `status` | string | — | Filter by status category: `todo`, `in_progress`, `done` |
+| `priority` | string | — | Filter by priority: `none`, `low`, `medium`, `high`, `urgent` |
+| `search` | string | — | Search in title or external ID (e.g. `PROJ-42`) |
+| `assigneeId` | UUID | — | Filter by assignee user ID. Use List Members to get IDs |
+| `labelId` | UUID | — | Filter by label ID. Use List Labels to get IDs |
+
+**Example request**
+
+```bash
+curl "https://api.elean.app/v1/public/my-project/tasks?status=in_progress&limit=10" \
+  -H "Authorization: Bearer el_a3f9c2e1b8d47f6a9c0e2b5d8f1a4c7e9b2d5f8a1"
+```
+
+---
+
+### Get task
+
+`GET /{projectSlug}/tasks/{taskId}`
+
+Returns a single task. Accepts either a UUID or an external ID (e.g. `PROJ-42`). Requires `task:read`.
+
+**Example request**
+
+```bash
+curl https://api.elean.app/v1/public/my-project/tasks/PROJ-42 \
+  -H "Authorization: Bearer el_a3f9c2e1b8d47f6a9c0e2b5d8f1a4c7e9b2d5f8a1"
+```
+
+---
+
+### Create task
+
+`POST /{projectSlug}/tasks`
+
+Creates a new task in the given project. Requires `task:create`.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `title` | string | Yes | Task title, 1–500 characters |
+| `description` | string | No | Plain text description. Newlines are preserved |
+| `priority` | string | No | `none`, `low`, `medium`, `high`, or `urgent`. Defaults to `medium` |
+| `dueDate` | string | No | ISO 8601 date-time, e.g. `2026-03-15T00:00:00.000Z` |
+| `statusId` | UUID | No | Custom status ID. Defaults to the first `todo` status if omitted |
+| `assigneeIds` | UUID[] | No | List of member user IDs to assign. Use List Members to get IDs |
+| `labelIds` | UUID[] | No | List of label IDs to attach. Use List Labels to get IDs |
+
+**Example request**
+
+```bash
+curl -X POST https://api.elean.app/v1/public/my-project/tasks \
+  -H "Authorization: Bearer el_a3f9c2e1b8d47f6a9c0e2b5d8f1a4c7e9b2d5f8a1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Fix login bug",
+    "description": "Users cannot log in with SSO on Safari.",
+    "priority": "high",
+    "dueDate": "2026-03-15T00:00:00.000Z"
+  }'
+```
+
+---
+
+### Update task
+
+`PATCH /{projectSlug}/tasks/{taskId}`
+
+Updates one or more fields on an existing task. Only the fields you include are changed. Accepts either a UUID or an external ID. Requires `task:update`.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `title` | string | No | New task title, 1–500 characters |
+| `description` | string \| null | No | New description, or `null` to clear it |
+| `priority` | string | No | `none`, `low`, `medium`, `high`, or `urgent` |
+| `dueDate` | string \| null | No | ISO 8601 date-time, or `null` to clear it |
+| `statusId` | UUID | No | Custom status ID to assign |
+| `assigneeIds` | UUID[] | No | Replace assignees list. Pass `[]` to clear all assignees |
+| `labelIds` | UUID[] | No | Replace labels list. Pass `[]` to clear all labels |
+
+**Example request**
+
+```bash
+curl -X PATCH https://api.elean.app/v1/public/my-project/tasks/PROJ-42 \
+  -H "Authorization: Bearer el_a3f9c2e1b8d47f6a9c0e2b5d8f1a4c7e9b2d5f8a1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "priority": "urgent",
+    "statusId": "018e1b2c-aaaa-0000-0000-000000000002"
+  }'
+```
+
+---
+
+### Delete task
+
+`DELETE /{projectSlug}/tasks/{taskId}`
+
+Permanently deletes a task. This action cannot be undone. Accepts either a UUID or an external ID. Requires `task:update`.
+
+**Example request**
+
+```bash
+curl -X DELETE https://api.elean.app/v1/public/my-project/tasks/PROJ-42 \
+  -H "Authorization: Bearer el_a3f9c2e1b8d47f6a9c0e2b5d8f1a4c7e9b2d5f8a1"
+```
+
+**Response**
+
+```json
+{ "success": true }
+```
+
+---
+
+### List comments
+
+`GET /{projectSlug}/tasks/{taskId}/comments`
+
+Returns all comments on a task, ordered oldest first. Accepts either a UUID or an external ID. Requires `task:read`.
+
+**Example request**
+
+```bash
+curl https://api.elean.app/v1/public/my-project/tasks/PROJ-42/comments \
+  -H "Authorization: Bearer el_a3f9c2e1b8d47f6a9c0e2b5d8f1a4c7e9b2d5f8a1"
+```
+
+**Example response**
+
+```json
+[
+  {
+    "id": "018e1b2c-cccc-0000-0000-000000000001",
+    "content": "This is ready for review.",
+    "authorName": "my-api-key",
+    "createdAt": "2026-03-15T10:00:00.000Z",
+    "updatedAt": "2026-03-15T10:00:00.000Z"
+  }
+]
+```
+
+---
+
+### Add comment
+
+`POST /{projectSlug}/tasks/{taskId}/comments`
+
+Adds a comment to a task. The comment is attributed to the API key name. Accepts either a UUID or an external ID. Requires `task:update`.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `content` | string | Yes | Comment text, 1–10 000 characters |
+
+**Example request**
+
+```bash
+curl -X POST https://api.elean.app/v1/public/my-project/tasks/PROJ-42/comments \
+  -H "Authorization: Bearer el_a3f9c2e1b8d47f6a9c0e2b5d8f1a4c7e9b2d5f8a1" \
+  -H "Content-Type: application/json" \
+  -d '{ "content": "Deployed to staging." }'
+```
+
+---
+
+### Get attachment
+
+`GET /{projectSlug}/tasks/{taskId}/attachments/{attachmentId}`
+
+Returns attachment details including a presigned download URL valid for 1 hour. Requires `task:read`.
+
+---
+
+### Upload attachment
+
+`POST /{projectSlug}/tasks/{taskId}/attachments`
+
+Uploads a file and attaches it to a task. Max file size is 10 MB. Send as `multipart/form-data` with a `file` field. Requires `task:create`.
+
+---
+
+## Task object
+
+All task endpoints return tasks in the following shape:
+
+```json
+{
+  "id": "018e1b2c-3d4e-5f6a-7b8c-9d0e1f2a3b4c",
+  "externalId": "PROJ-42",
+  "title": "Fix login bug",
+  "description": "Users cannot log in with SSO on Safari.",
+  "category": "in_progress",
+  "status": {
+    "id": "018e1b2c-aaaa-0000-0000-000000000002",
+    "name": "In Review",
+    "color": "#f59e0b",
+    "category": "in_progress"
+  },
+  "priority": "high",
+  "dueDate": "2026-03-15T00:00:00.000Z",
+  "assignees": [
+    { "id": "018e1b2c-0000-0000-0000-000000000099", "name": "Jane Smith" }
+  ],
+  "labels": [
+    { "id": "018e1b2c-dddd-0000-0000-000000000001", "name": "Bug", "color": "#ef4444" }
+  ],
+  "attachments": [
+    { "id": "018e1b2c-aaaa-bbbb-cccc-000000000001", "filename": "screenshot.png" }
+  ],
+  "createdAt": "2026-03-01T12:00:00.000Z",
+  "updatedAt": "2026-03-02T09:30:00.000Z"
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | UUID | Unique identifier |
+| `externalId` | string | Human-readable ID, unique within the project (e.g. `PROJ-42`) |
+| `title` | string | Task title |
+| `description` | string \| null | Plain text description, or `null` if empty |
+| `category` | string | Status category: `todo`, `in_progress`, or `done` |
+| `status` | object \| null | Full custom status object `{ id, name, color, category }` |
+| `priority` | string | One of `none`, `low`, `medium`, `high`, `urgent` |
+| `dueDate` | string \| null | ISO 8601 date-time, or `null` |
+| `assignees` | array | List of `{ id, name }` objects |
+| `labels` | array | List of `{ id, name, color }` objects |
+| `attachments` | array | List of `{ id, filename }` — use Get Attachment for the download URL |
+| `createdAt` | string | ISO 8601 creation timestamp |
+| `updatedAt` | string | ISO 8601 last-updated timestamp |
+
+## Error responses
+
+All errors follow the same shape:
+
+```json
+{
+  "statusCode": 403,
+  "message": "Missing required scope: task:create"
+}
+```
+
+| Status | Meaning |
+|---|---|
+| `400 Bad Request` | Invalid or missing request fields |
+| `401 Unauthorized` | API key is missing, invalid, or expired |
+| `403 Forbidden` | Key lacks the required scope, or the project is outside the key's allowed scope |
+| `404 Not Found` | Project or task not found within the key's workspace |
+| `429 Too Many Requests` | Rate limit exceeded |

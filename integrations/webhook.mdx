@@ -1,0 +1,92 @@
+---
+title: "Custom Webhook"
+sidebarTitle: "Webhook"
+description: "Send task events as signed JSON payloads to any HTTP endpoint."
+icon: "webhook"
+---
+
+elean can send task events as signed JSON payloads to any HTTP endpoint you control — new tasks, assignments, status and priority changes, comments, updates, and deletions.
+
+## Setup
+
+<Steps>
+  <Step title="Open Integrations">
+    Go to **Workspace Settings → Integrations** and find the **Custom Webhook** card.
+  </Step>
+  <Step title="Configure the endpoint">
+    Click **Connect** and enter the **Endpoint URL** that should receive POST requests. elean generates a **Signing Secret** for you — use it to verify incoming requests.
+  </Step>
+  <Step title="Optional settings">
+    Set **Max retry attempts** (1–10, default 5) and any **custom headers** to include on every request.
+  </Step>
+  <Step title="Choose events">
+    Select which events should be sent to that endpoint. You can change this at any time.
+  </Step>
+</Steps>
+
+## Payload
+
+Each request is a `POST` with a JSON body:
+
+```json
+{
+  "event": "task.created",
+  "data": { "...": "event-specific fields" },
+  "timestamp": "2026-07-15T12:00:00.000Z"
+}
+```
+
+Requests include these headers:
+
+| Header | Description |
+| --- | --- |
+| `X-Elean-Signature` | HMAC SHA-256 of the raw request body, signed with your Signing Secret |
+| `X-Elean-Event` | The event name, e.g. `task.created` |
+
+### Verifying the signature
+
+Compute an HMAC SHA-256 of the raw request body using your Signing Secret, and compare it (constant-time) to the `X-Elean-Signature` header:
+
+```js
+import { createHmac, timingSafeEqual } from "crypto";
+
+function isValidSignature(rawBody, signatureHeader, secret) {
+  const expected = createHmac("sha256", secret).update(rawBody).digest("hex");
+  return timingSafeEqual(Buffer.from(expected), Buffer.from(signatureHeader));
+}
+```
+
+<Warning>
+  Always verify against the **raw** request body, before any JSON parsing — re-serializing the parsed body can change byte-for-byte formatting and break the signature check.
+</Warning>
+
+## Supported events
+
+| Event | Description |
+| --- | --- |
+| `task.created` | A new task is created |
+| `task.updated` | A task's fields are edited |
+| `task.assigned` | A task is assigned to someone |
+| `task.status_changed` | A task moves to a different status |
+| `task.priority_changed` | A task's priority changes |
+| `task.comment` | A new comment is posted on a task |
+| `task.deleted` | A task is deleted |
+
+## Retries
+
+If your endpoint doesn't respond with a `2xx` status, elean retries with backoff up to your configured **Max retry attempts** (default 5).
+
+## Limits
+
+The number of webhook connections per workspace depends on your plan:
+
+| Plan | Webhook connections |
+| --- | --- |
+| Stream | 3 |
+| River | 15 |
+| Yasien | 30 |
+| Alpheus | Unlimited |
+
+## Disconnecting
+
+Remove a connection from **Workspace Settings → Integrations → Custom Webhook → Disconnect**. No further events will be sent, and you can reconnect at any time.
