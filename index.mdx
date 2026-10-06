@@ -11,7 +11,7 @@ elean is a task and project management platform built for teams that want a fast
 
 <AccordionGroup>
   <Accordion title="Workspace" icon="building">
-    The top-level container for your team. Members, billing, roles, and workspace-wide settings (labels, statuses, security) live here.
+    The top-level container for your team. Members, billing, roles, and workspace-wide settings (labels, security, integrations, API keys) live here.
   </Accordion>
 
   <Accordion title="Project" icon="folder">
@@ -34,9 +34,15 @@ elean is a task and project management platform built for teams that want a fast
     Create a workspace, project, and your first task in a few minutes.
   </Card>
 
-  <Card title="Connect an AI agent" icon="robot" href="/mcp/index">
+  <Card title="Connect an AI agent" icon="robot" href="/mcp/overview">
     Let Claude Code, Cursor, or any MCP client read and write tasks for you.
   </Card>
-</CardGroup>
 
-Need to integrate elean into your own scripts or tools instead? See the [Public API reference](/api-reference/introduction).
+  <Card title="Connect your tools" icon="plug" href="/integrations/github">
+    Link GitHub pull requests to tasks, or send task events to Discord and webhooks.
+  </Card>
+
+  <Card title="Public API" icon="code" href="/api-reference/introduction">
+    Integrate elean into your own scripts and tools.
+  </Card>
+</CardGroup>

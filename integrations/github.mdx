@@ -1,0 +1,110 @@
+---
+title: "GitHub"
+sidebarTitle: "GitHub"
+description: "Link pull requests, branches and commits to tasks, and move tasks automatically as work progresses."
+icon: "github"
+---
+
+Connect GitHub and elean links pull requests, branches and commits to tasks by their key. Workflow rules then move tasks between statuses when something happens on GitHub — a branch is created, a pull request is opened, merged, or shipped in a release.
+
+## Connect GitHub
+
+<Steps>
+  <Step title="Open Integrations">
+    Go to **Workspace Settings → Integrations**, find the **GitHub** card and click **Connect**.
+  </Step>
+  <Step title="Install the elean app">
+    You're redirected to GitHub. Pick your personal account or an organization, then choose **All repositories** or **Only select repositories**.
+  </Step>
+  <Step title="Back in elean">
+    After installing, you land back in elean with GitHub connected. Click **Configure** on the GitHub card to see connected accounts.
+  </Step>
+</Steps>
+
+You need the **Manage Integrations** permission in elean to connect GitHub.
+
+<Note>
+  If you're not an owner of the GitHub organization, GitHub sends an installation request to the owners instead. elean shows **Installation requested** — GitHub is connected once an owner approves it.
+</Note>
+
+To connect more accounts or organizations, click **Add account** on the GitHub page. To change which repositories elean can see, click **Manage repository access on GitHub**.
+
+## Link work to tasks
+
+Put the task key — for example `ELEA-18` — anywhere in:
+
+| Where | Example |
+| --- | --- |
+| Branch name | `elea-18-fix-login`, `fix/ELEA-18` |
+| Pull request title or description | `Fix login redirect (ELEA-18)` |
+| Commit message | `ELEA-18 handle expired session` |
+
+Keys are case-insensitive, and one pull request or commit can mention several tasks. elean links it to each of them.
+
+Linked pull requests, branches and commits appear in the **Development** section of the task, with the pull request state (open, draft, merged, closed). Every link is also recorded in the task's **Activity**. To remove a wrong link, hover over it and click **Unlink from task**.
+
+People who push code don't need an elean account — linking only needs the key.
+
+## Workflow rules
+
+Rules move a task to a status of your choice when something happens on GitHub. Set them per project in **Project settings → GitHub**.
+
+| Trigger | When it fires |
+| --- | --- |
+| Branch created | A branch with the task key is pushed |
+| Draft pull request opened | A draft pull request is opened |
+| Pull request opened | A pull request is opened (not as draft) |
+| Pull request ready for review | A draft is marked as ready for review |
+| Pull request approved | A review approves the pull request |
+| Changes requested | A review requests changes |
+| Pull request merged | The pull request is merged |
+| Pull request closed without merging | The pull request is closed and not merged |
+| Release published | A release ships the task's merged pull request (see below) |
+
+For each trigger, choose a status or **Do nothing**. **Recommended setup** fills in a sensible start: *Pull request merged → Done*, *Branch created → In Progress*, *Pull request opened → In Progress*.
+
+By default a rule only moves a task **forward** — a late event never drags a finished task back. Turn on **Can move back** for a rule that should, for example when a reopened pull request should return the task to In Progress. Archived tasks are never moved.
+
+Status changes made by a rule show in the task's Activity as done by **GitHub**, with a link to the pull request, branch or release that caused them.
+
+### Release published
+
+When you publish a release on GitHub, elean finds every pull request merged into the default branch since the previous release and moves the linked tasks — useful for a **Shipped** status that's separate from **Done**.
+
+- Only published releases count. Drafts and pre-releases are ignored.
+- The first release in a repository is skipped, because there's no previous release to compare against.
+
+## Git menu
+
+The **Git** button in the task header gives you:
+
+- **Copy branch name** — a branch name with the task key, e.g. `elea-18-fix-login-redirect`.
+- **Copy git command** — the same branch as a ready `git checkout -b …` command.
+- **Create branch on GitHub** — creates the branch from the repository's default branch. With more than one repository connected, pick the repository first.
+
+## Plans
+
+| | Free | Pro | Business |
+| --- | --- | --- | --- |
+| Connected repositories | Unlimited | Unlimited | Unlimited |
+| Linking and Development panel | ✓ | ✓ | ✓ |
+| Workflow rules per project | 2 | Unlimited | Unlimited |
+| Release published trigger | — | ✓ | ✓ |
+
+## Disconnect
+
+Go to **Workspace Settings → Integrations → GitHub → Configure** and click **Disconnect** next to the account. This uninstalls the elean app from that account on GitHub. Pull requests and commits already linked to tasks stay visible. Uninstalling the app directly on GitHub has the same effect.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="A pull request doesn't show up on the task">
+    Check that the task key is in the branch name, title or description, and that the repository is included in the app's repository access on GitHub.
+  </Accordion>
+  <Accordion title="Create branch on GitHub fails with a permission error">
+    The app installation needs **Contents: Read & write**. When elean asks for new permissions, an owner of the GitHub account has to accept them on the installation.
+  </Accordion>
+  <Accordion title="A rule didn't move the task">
+    Rules only move tasks forward unless **Can move back** is on. The task may already be at or past the target status, or it may be archived.
+  </Accordion>
+</AccordionGroup>
