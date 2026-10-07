@@ -20,10 +20,13 @@ icon: "wrench"
 | `list_members` | List all members of the workspace |
 | `list_statuses` | List a project's task statuses — each project has its own set, statuses aren't shared workspace-wide |
 | `list_labels` | List labels available for a project (workspace-wide labels plus labels scoped to that project) |
+| `list_cycles` | List cycles in the workspace — optionally only those for a project (plus workspace-wide cycles), filtered by status `upcoming`, `active`, or `completed` |
+| `list_attachments` | List files attached to a task (metadata only, no download links) |
+| `upload_attachment` | Attach a file to a task. Content is raw base64 (no `data:` URL prefix), up to 5 MB decoded; file types are validated the same way as in the web app |
 
 ## Notes
 
-- Task descriptions and comments are plain text — elean converts them to its internal rich text format automatically.
+- Task descriptions and comments accept Markdown — headings, bold, italic, strikethrough, inline code, bullet, numbered and checkbox lists, blockquotes, code blocks, horizontal rules, and links. elean converts them to its rich text format. Tables, images, and raw HTML are dropped.
 - `create_task` and `update_task` accept up to 5 assignee IDs. On `update_task`, `assigneeIds` and `labelIds` **replace** the existing list rather than merging into it.
 - `priority` is one of `low`, `medium`, `high`, or `urgent` — custom priorities aren't exposed over MCP.
 - `statusId` and `labelIds` take IDs, not names — use `list_statuses` and `list_labels` to look them up for a project first.

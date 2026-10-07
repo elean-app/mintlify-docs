@@ -37,7 +37,15 @@ API keys are created in **Workspace Settings → API Keys**. Each key carries:
 
 ## Rate Limits
 
-Rate limits are enforced per API key at **60 requests per minute**. Exceeding the limit returns `429 Too Many Requests`. Per-plan limits will be introduced in a future release.
+Rate limits are enforced per API key and depend on your workspace's plan:
+
+| Plan | Requests per minute |
+|---|---|
+| Free | 30 |
+| Pro | 80 |
+| Business | 300 |
+
+Exceeding the limit returns `429 Too Many Requests`.
 
 ## Scopes
 

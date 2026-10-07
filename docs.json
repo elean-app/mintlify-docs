@@ -68,6 +68,7 @@
           {
             "group": "Integrations",
             "pages": [
+              "integrations/github",
               "integrations/discord",
               "integrations/webhook"
             ]
@@ -100,7 +101,7 @@
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://elean.app/login"
     }
   },
   "contextual": {

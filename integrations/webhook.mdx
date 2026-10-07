@@ -36,6 +36,30 @@ Each request is a `POST` with a JSON body:
 }
 ```
 
+For example, a `task.status_changed` event:
+
+```json
+{
+  "event": "task.status_changed",
+  "data": {
+    "event": "task.status_changed",
+    "taskId": "8f3c2a1e-5b7d-4c9a-9e2f-1a6b3d4c5e7f",
+    "taskExternalId": "ENG-42",
+    "taskTitle": "Fix login redirect on mobile",
+    "projectId": "2d9e4f1a-7c3b-4a8e-b6d5-9f0e1c2a3b4d",
+    "workspaceId": "6a1b2c3d-4e5f-4a7b-8c9d-0e1f2a3b4c5d",
+    "workspaceSlug": "acme",
+    "actorId": "c4d5e6f7-8a9b-4c0d-9e1f-2a3b4c5d6e7f",
+    "actorName": "Jane Doe",
+    "oldStatus": "In Progress",
+    "newStatus": "Done"
+  },
+  "timestamp": "2026-10-06T09:30:00.000Z"
+}
+```
+
+`oldStatus` and `newStatus` are the status names as shown in the project. `actorId` is `null` when the change came from the Public API or the system. Payloads can include additional fields; rely only on the ones documented here.
+
 Requests include these headers:
 
 | Header | Description |
@@ -82,10 +106,9 @@ The number of webhook connections per workspace depends on your plan:
 
 | Plan | Webhook connections |
 | --- | --- |
-| Stream | 3 |
-| River | 15 |
-| Yasien | 30 |
-| Alpheus | Unlimited |
+| Free | 3 |
+| Pro | 15 |
+| Business | Unlimited |
 
 ## Disconnecting
 
