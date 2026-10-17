@@ -100,6 +100,10 @@ function isValidSignature(rawBody, signatureHeader, secret) {
 
 If your endpoint doesn't respond with a `2xx` status, elean retries with backoff up to your configured **Max retry attempts** (default 5).
 
+## Delivery history
+
+Open a connection under **Workspace Settings → Integrations** to see its **Delivery history**: each event sent, its status, the number of attempts and the HTTP response code. Entries are kept for **30 days** and then deleted automatically. Removing the connection deletes its history right away.
+
 ## Limits
 
 The number of webhook connections per workspace depends on your plan:
