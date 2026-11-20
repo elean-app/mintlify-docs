@@ -5,28 +5,30 @@ description: "Full reference of MCP tools exposed by the elean server."
 icon: "wrench"
 ---
 
-| Tool | Description |
-| --- | --- |
-| `list_projects` | List all projects in your workspace |
-| `get_project` | Get details of a specific project |
-| `list_tasks` | List tasks in a project — paginated (6 per page by default, up to 50), with `search` (matches title, description, and the human-readable ID like `EL-90`), `statusIds`/`assigneeIds` filters, and `sortBy`/`sortOrder` |
-| `get_task` | Get details of a specific task by its internal ID |
-| `get_task_by_external_id` | Get a task by its human-readable ID (e.g. `EL-90`), without needing the internal task ID or paging through `list_tasks` |
-| `create_task` | Create a task (title, description, assignees, status, priority, labels, due date, cycle). Pass `parentTaskId` to create it directly as a subtask |
-| `update_task` | Update an existing task. Pass `parentTaskId` to nest it under another task, or `null` to detach it from its current parent |
-| `list_subtasks` | List the subtasks of a given task |
-| `list_comments` | List comments on a task |
-| `add_comment` | Add a comment to a task |
-| `list_members` | List all members of the workspace |
-| `list_statuses` | List a project's task statuses — each project has its own set, statuses aren't shared workspace-wide |
-| `list_labels` | List labels available for a project (workspace-wide labels plus labels scoped to that project) |
-| `list_cycles` | List cycles in the workspace — optionally only those for a project (plus workspace-wide cycles), filtered by status `upcoming`, `active`, or `completed` |
-| `list_attachments` | List files attached to a task (metadata only, no download links) |
-| `upload_attachment` | Attach a file to a task. Content is raw base64 (no `data:` URL prefix), up to 5 MB decoded; file types are validated the same way as in the web app |
+Each tool declares MCP annotations that mark it as read-only or as one that writes to your workspace. The **Access** column shows which.
+
+| Tool | Access | Description |
+| --- | --- | --- |
+| `list_projects` | Read-only | List all projects in your workspace |
+| `get_project` | Read-only | Get details of a specific project |
+| `list_tasks` | Read-only | List tasks in a project as short summaries (status, priority, assignees, labels, and a description excerpt — use `get_task` for the full description). Paginated (6 per page by default, up to 50), with `search` (matches title, description, and the human-readable ID like `EL-90`), `statusIds`/`assigneeIds` filters, and `sortBy`/`sortOrder` |
+| `get_task` | Read-only | Get details of a specific task by its internal ID |
+| `get_task_by_external_id` | Read-only | Get a task by its human-readable ID (e.g. `EL-90`), without needing the internal task ID or paging through `list_tasks` |
+| `create_task` | Write | Create a task (title, description, assignees, status, priority, labels, due date, cycle). Pass `parentTaskId` to create it directly as a subtask |
+| `update_task` | Write | Update an existing task. Pass `cycleId: null` to remove it from its cycle. Pass `parentTaskId` to nest it under another task, or `null` to detach it from its current parent |
+| `list_subtasks` | Read-only | List the subtasks of a given task |
+| `list_comments` | Read-only | List comments on a task |
+| `add_comment` | Write | Add a comment to a task |
+| `list_members` | Read-only | List all members of the workspace |
+| `list_statuses` | Read-only | List a project's task statuses — each project has its own set, statuses aren't shared workspace-wide |
+| `list_labels` | Read-only | List labels available for a project (workspace-wide labels plus labels scoped to that project) |
+| `list_cycles` | Read-only | List cycles in the workspace — optionally only those for a project (plus workspace-wide cycles), filtered by status `upcoming`, `active`, or `completed` |
+| `list_attachments` | Read-only | List files attached to a task (metadata only, no download links) |
+| `upload_attachment` | Write | Attach a file to a task. Content is raw base64 (no `data:` URL prefix), up to 5 MB decoded; file types are validated the same way as in the web app |
 
 ## Notes
 
-- Task descriptions and comments accept Markdown — headings, bold, italic, strikethrough, inline code, bullet, numbered and checkbox lists, blockquotes, code blocks, horizontal rules, and links. elean converts them to its rich text format. Tables, images, and raw HTML are dropped.
+- Task descriptions and comments accept Markdown — headings (levels 1–3), bold, italic, strikethrough, inline code, bullet, numbered and checkbox lists, blockquotes, code blocks, horizontal rules, and links. elean converts them to its rich text format. Deeper headings become level 3; tables, images, and raw HTML are dropped.
 - `create_task` and `update_task` accept up to 5 assignee IDs. On `update_task`, `assigneeIds` and `labelIds` **replace** the existing list rather than merging into it.
 - `priority` is one of `low`, `medium`, `high`, or `urgent` — custom priorities aren't exposed over MCP.
 - `statusId` and `labelIds` take IDs, not names — use `list_statuses` and `list_labels` to look them up for a project first.

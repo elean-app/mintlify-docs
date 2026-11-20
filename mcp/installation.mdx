@@ -1,19 +1,43 @@
 ---
 title: "Installation"
 sidebarTitle: "Installation"
-description: "Connect Claude Code, Claude Desktop, Cursor, Windsurf, or VS Code to elean."
+description: "Connect Claude, Claude Code, Cursor, Windsurf, or VS Code to elean."
 icon: "download"
 ---
 
-The server speaks Streamable HTTP at a single endpoint:
+<Note>
+  AI agent connections are **disabled by default**. Before anyone can connect, turn on **AI agent connections** in **Workspace Settings → Security** — see [Enabling MCP for your workspace](/mcp/overview#enabling-mcp-for-your-workspace).
+</Note>
+
+## Claude (connector directory)
+
+elean is listed in Claude's connector directory, so this is the quickest way to connect from Claude — no URL to paste.
+
+<Steps>
+  <Step title="Open the elean listing">
+    Go to [claude.ai/directory/elean](https://claude.ai/directory/elean) while signed in to Claude.
+  </Step>
+  <Step title="Connect">
+    Click the connect button on the listing. Claude opens elean's consent screen in your browser.
+  </Step>
+  <Step title="Sign in and approve">
+    Sign in to elean if prompted, pick the workspace the agent gets access to, and approve the connection.
+  </Step>
+</Steps>
+
+Once approved, elean's tools are available in your Claude conversations. As with every client, a token is scoped to a single workspace — connect again to grant access to another one.
+
+## Connect by URL
+
+For Claude Code and other MCP clients, point the client at the server directly. The server speaks Streamable HTTP at a single endpoint:
 
 ```text
 https://mcp.elean.app/mcp
 ```
 
-Every client below discovers OAuth automatically (RFC 8414) and registers itself on first connect (RFC 7591) — no `client_id` or API key to copy anywhere. The first tool call opens your browser at `elean.app/mcp-connect`, where you approve the connection and pick which workspace the agent gets access to. A token is scoped to a single workspace — connect again to grant access to another one.
+Every client below discovers OAuth automatically (RFC 8414) and registers itself on first connect (RFC 7591) — no `client_id` or API key to copy anywhere. The first time the client connects, it opens your browser at `elean.app/mcp-connect`, where you approve the connection and pick which workspace the agent gets access to. A token is scoped to a single workspace — connect again to grant access to another one.
 
-## Popular clients
+### Popular clients
 
 <Tabs>
   <Tab title="Claude Code">
@@ -21,9 +45,11 @@ Every client below discovers OAuth automatically (RFC 8414) and registers itself
     claude mcp add --transport http elean https://mcp.elean.app/mcp
     ```
 
-    The OAuth flow runs automatically on the first tool call.
+    The server requires OAuth before it accepts any request. If elean shows as needing authentication, run `/mcp` in Claude Code and select elean to start the OAuth flow.
   </Tab>
   <Tab title="Claude Desktop">
+    The easiest route is the [connector directory](#claude-connector-directory). To add elean as a custom connector instead:
+
     1. Go to **Settings → Connectors → Add custom connector**.
     2. Name it (e.g. "elean") and paste the URL above.
     3. Click **Add**, then complete the OAuth flow in the browser tab that opens.
