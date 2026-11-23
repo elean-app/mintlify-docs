@@ -45,7 +45,31 @@ Rate limits are enforced per API key and depend on your workspace's plan:
 | Pro | 80 |
 | Business | 300 |
 
-Exceeding the limit returns `429 Too Many Requests`.
+Your key's limit is also shown in **Workspace Settings → API keys**.
+
+Every response tells you where you stand:
+
+| Header | Meaning |
+|---|---|
+| `RateLimit-Limit` | Requests allowed per minute for this key |
+| `RateLimit-Remaining` | Requests left in the current minute |
+| `RateLimit-Reset` | Seconds until the limit resets |
+
+The same values are also sent as `X-RateLimit-Limit`, `X-RateLimit-Remaining` and `X-RateLimit-Reset`.
+
+Exceeding the limit returns `429 Too Many Requests` with a `Retry-After` header: the number of seconds to wait before trying again.
+
+```bash
+curl -i https://api.elean.app/v1/public/my-project/statuses \
+  -H "Authorization: Bearer el_<your_key>"
+
+HTTP/2 200
+ratelimit-limit: 80
+ratelimit-remaining: 79
+ratelimit-reset: 60
+```
+
+Rejected requests (a revoked, disabled or expired key, a missing scope, or a rate limit hit) appear in your workspace's audit log (Pro and Business) as **API key denied**, at most once per key per hour.
 
 ## Scopes
 
